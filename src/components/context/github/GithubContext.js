@@ -11,10 +11,13 @@ export const GithubProvider = ({children}) =>{
     // const [loading, setLoading] = useState(true);
     const intialState = {
         user: [],
+        singleUser:{},
+        repos: [],
         loading: false
     }
 
     const [state, dispatch] = useReducer(githubReducer, intialState)
+
     const searchUser = async(text)=>{
 
         const params = new URLSearchParams({
@@ -35,6 +38,53 @@ export const GithubProvider = ({children}) =>{
             payload: items,
         })
       }
+
+      // Get Single User
+    const getUser = async(login)=>{
+
+        setLoading();
+        const response =await fetch( `${GITHUB_URL}/users/${login}`, {
+            headers:{
+                Authorization: `token ${GITHUB_TOKEN}`
+            },
+        });
+        if(response.status === 404){
+            window.location = '/notfound'
+        }else{
+
+            const data = await response.json();
+    
+            dispatch({
+                type: 'GET_SINGLEUSER',
+                payload: data,
+            })
+        }
+      }
+      // Get Single User
+    const getUserRepos = async(login)=>{
+        const params = new URLSearchParams({
+            sort: 'created',
+            per_page:10,
+        })
+
+        setLoading();
+        const response =await fetch( `${GITHUB_URL}/users/${login}/repos?${params}`, {
+            headers:{
+                Authorization: `token ${GITHUB_TOKEN}`
+            },
+        });
+        if(response.status === 404){
+            window.location = '/notfound'
+        }else{
+
+            const data = await response.json();
+    
+            dispatch({
+                type: 'GET_REPOS',
+                payload: data,
+            })
+        }
+      }
       //Set loading function
       const setLoading = ()=>{
           dispatch({
@@ -50,8 +100,12 @@ export const GithubProvider = ({children}) =>{
       return <GithubContext.Provider value={{
           user: state.user,
           loading: state.loading,
+          singleUser: state.singleUser,
+          repos: state.repos,
           searchUser,
           clearUser,
+          getUser,
+          getUserRepos,
       }}>
           {children}
       </GithubContext.Provider>
